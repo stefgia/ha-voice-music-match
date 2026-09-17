@@ -22,9 +22,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MusicMatchConfigEntry) -
 
     @callback
     def _async_take_over(_hass: HomeAssistant) -> None:
-        # After startup so media_player has registered the built-in handler,
-        # which is kept to hand back on unload. HA logs an "is being
-        # overwritten" warning here; that is this integration working.
+        # Wait for media_player to register the built-in handler, restored on unload.
         original = next(
             (h for h in intent.async_get(hass) if h.intent_type == INTENT_MEDIA_SEARCH_AND_PLAY),
             None,

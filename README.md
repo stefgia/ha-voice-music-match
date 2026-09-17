@@ -2,12 +2,12 @@
 
 Music Match is a Home Assistant integration for voice commands like "Play Gangstagrass in the bedroom". It checks the artist, album, song or playlist name against your Music Assistant library before playing, so a name that speech-to-text got wrong still plays the right thing.
 
-Speech-to-text often mangles band names. "Play Gangstagrass in the bedroom" can come out as "Play Gaza Grass in the bedroom". Home Assistant's built-in play command passes "Gaza Grass" to Music Assistant's search, which finds nothing. Music Match compares "Gaza Grass" with the names in your library, finds Gangstagrass, plays it and says "Playing Gangstagrass in the bedroom".
+Speech-to-text often mangles band names. "Play Gangstagrass in the bedroom" can come out as "Play Gaza Grass in the bedroom". Home Assistant's built-in play command passes "Gaza Grass" to Music Assistant's search, which finds nothing. Music Match compares "Gaza Grass" with the names in your library, finds Gangstagrass and hands that name to the play command, which plays it. Music Match then says "Playing Gangstagrass in the bedroom".
 
 ## Requirements
 
 - Home Assistant 2026.9.0 or newer.
-- The [Music Assistant integration](https://www.home-assistant.io/integrations/music_assistant/), set up with at least one player.
+- The [Music Assistant integration](https://www.home-assistant.io/integrations/music_assistant/).
 
 Music Match reads the library through the Music Assistant integration, so it needs no extra accounts or passwords.
 
@@ -22,23 +22,22 @@ Nothing needs configuring to start. The defaults work for English.
 
 ## What happens to a play request
 
-Music Match changes the handler behind Home Assistant's built-in play command. The sentences stay the same, so "play ... in the kitchen", "play the album ..." and "play ... on the living room speaker" all still work. Requests from an AI conversation agent also go through Music Match, because the agent uses the same play command.
+Music Match changes the handler behind Home Assistant's built-in play command. The sentences stay the same. Requests from an AI conversation agent also go through Music Match, because the agent uses the same play command.
 
-Music Match handles a request when all of these are true:
+Music Match only corrects the name, and Home Assistant's own handler does the rest. Music Match handles a request when both of these are true:
 
 - It is in the language set in the options.
-- It is for a single Music Assistant player, chosen by name, by area, or by the area of the voice assistant you spoke to. If an area also has other media players, such as a tablet, Music Match uses the Music Assistant one.
 - It asks for music: an artist, album, song or playlist, or no type at all.
 
 Home Assistant's own handler takes every other request, unchanged.
 
 Music Match scores each name in the library from 0 to 1. It compares both spelling (ignoring spaces, so "gangsta grass" matches "Gangstagrass") and a rough sound key (so "Gaza Grass" is close to "Gangstagrass"). "Song by artist" requests use both parts. If a song scores almost the same as an artist or album, the artist or album wins. Then:
 
-- A score at or above the play threshold (default 0.70) plays the item.
-- A score between the ask threshold (default 0.62) and the play threshold asks first. On a voice assistant, Music Match says "I couldn't find Gasket Grass.", then asks "Did you mean Gangstagrass?" and plays it if you say yes. A request that didn't come from a voice assistant device, such as typed text, gets both sentences in one reply and nothing is played.
+- A score at or above the play threshold (default 0.70) plays the item. Music Match passes the matched name and its type (artist, album, song or playlist) to Home Assistant's handler in place of what was heard.
+- A score between the ask threshold (default 0.62) and the play threshold asks first. On a voice assistant, Music Match says "I couldn't find Gasket Grass.", then asks "Did you mean Gangstagrass?" and plays it if you say yes. A typed request gets both sentences in one reply and nothing is played.
 - A lower score goes to Music Assistant's search with the name as it was heard, as if Music Match were not installed.
 
-Music Match loads the library when Home Assistant starts and again every hour. With more than 5,000 items it scores only the 1,000 names that share the most letter groups with the request. A 100,000-item library then takes about 45 ms per request.
+Music Match loads the library from every Music Assistant server when Home Assistant starts and again every hour. If a server can't be reached, Music Match keeps the items from its last successful load and still uses the other servers. With more than 5,000 items it scores only the 1,000 names that share the most letter groups with the request. A 100,000-item library then takes about 45 ms per request.
 
 ## Options
 
@@ -61,7 +60,7 @@ Replies are [Home Assistant templates](https://www.home-assistant.io/docs/config
 - `name`: the matched item's name.
 - `artist`: the first artist of a matched song or album. Empty for artists and playlists.
 - `media_type`: `artist`, `album`, `track` or `playlist`.
-- `area`: the player's area, if it has one.
+- `area`: the area named in the request, if any.
 
 A broken template falls back to the default reply and logs a warning.
 

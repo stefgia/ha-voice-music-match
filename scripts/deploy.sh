@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Copy the integration into a Home Assistant config directory, for testing a
-# change without going through HACS. Usage: scripts/deploy.sh /path/to/config
-# (or set HA_CONFIG). Restart Home Assistant afterwards.
+# Copy the integration into a Home Assistant config directory without HACS.
+# Usage: scripts/deploy.sh /path/to/config (or set HA_CONFIG).
 set -euo pipefail
 
 project="$(cd "$(dirname "$0")/.." && pwd)"

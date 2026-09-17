@@ -4,26 +4,20 @@ from datetime import timedelta
 
 DOMAIN = "ha_voice_music_match"
 
-# Fired for every request the handler matches: what was heard, what it picked,
-# the score and runner-up. The log thresholds are tuned from.
 EVENT_DECISION = f"{DOMAIN}_decision"
 
 MUSIC_ASSISTANT_DOMAIN = "music_assistant"
 
 REFRESH_INTERVAL = timedelta(hours=1)
-# Sooner retry while there is no library at all (MA still starting, say).
+# Used until the first library load succeeds.
 RETRY_DELAY = timedelta(minutes=5)
-# music_assistant.get_library returns at most this many items per call.
+# get_library's maximum page size.
 PAGE_SIZE = 500
 
-# How long "did you mean" waits for the satellite to finish speaking the first
-# reply before asking.
 SATELLITE_IDLE_TIMEOUT = 20.0
-# The satellite can report idle for a moment before the pipeline really ends,
-# so idle must hold this long.
+# Satellites can briefly report idle before the pipeline ends.
 SATELLITE_IDLE_SETTLE = 0.7
 
-# Options, all changeable after setup. Missing options fall back to these.
 CONF_LANGUAGE = "language"
 CONF_ACT_THRESHOLD = "act_threshold"
 CONF_ASK_THRESHOLD = "ask_threshold"
@@ -33,7 +27,6 @@ CONF_REPLY_DID_YOU_MEAN = "reply_did_you_mean"
 CONF_ANSWERS_YES = "answers_yes"
 CONF_ANSWERS_NO = "answers_no"
 
-# Reply templates get: heard, name, artist (songs and albums only), media_type, area.
 DEFAULT_REPLY_PLAYING = (
     "Playing {{ name }}{% if artist %} by {{ artist }}{% endif %}"
     "{% if area %} in the {{ area | lower }}{% endif %}"

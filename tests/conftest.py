@@ -1,4 +1,4 @@
-"""Shared fixtures: a fake Music Assistant library and players in two areas."""
+"""Shared fixtures: a fake Music Assistant library and a speaker."""
 
 from __future__ import annotations
 
@@ -15,11 +15,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.ha_voice_music_match.const import DOMAIN
 
-MA_PLAYER = "media_player.bedroom_speaker"
-MA_PLAYER_2 = "media_player.living_room_speaker"
-# Not Music Assistant, but also supports search, like a View Assist tablet.
-TABLET = "media_player.bedroom_tablet"
-OTHER_PLAYER = "media_player.office_tv"
+PLAYER = "media_player.bedroom_speaker"
 
 LIBRARY: dict[str, list[dict[str, Any]]] = {
     "artist": [
@@ -84,25 +80,17 @@ def fake_library(
 
 
 @pytest.fixture
-def players(hass: HomeAssistant) -> None:
-    """MA speakers in the Bedroom and Living Room, a tablet beside the Bedroom one, a TV alone in the Office."""
-    areas = ar.async_get(hass)
+def player(hass: HomeAssistant) -> None:
+    """A speaker in the Bedroom that can search and play."""
+    area = ar.async_get(hass).async_get_or_create("Bedroom")
     entities = er.async_get(hass)
+    object_id = PLAYER.split(".")[1]
+    entry = entities.async_get_or_create(
+        "media_player", "music_assistant", object_id, suggested_object_id=object_id
+    )
+    entities.async_update_entity(entry.entity_id, area_id=area.id)
     features = MediaPlayerEntityFeature.SEARCH_MEDIA | MediaPlayerEntityFeature.PLAY_MEDIA
-
-    for entity_id, platform, area in (
-        (MA_PLAYER, "music_assistant", "Bedroom"),
-        (MA_PLAYER_2, "music_assistant", "Living Room"),
-        (TABLET, "vaca", "Bedroom"),
-        (OTHER_PLAYER, "androidtv", "Office"),
-    ):
-        area_entry = areas.async_get_or_create(area)
-        object_id = entity_id.split(".")[1]
-        entry = entities.async_get_or_create(
-            "media_player", platform, object_id, suggested_object_id=object_id
-        )
-        entities.async_update_entity(entry.entity_id, area_id=area_entry.id)
-        hass.states.async_set(entity_id, "idle", {"supported_features": features})
+    hass.states.async_set(PLAYER, "idle", {"supported_features": features})
 
 
 async def setup_integration(

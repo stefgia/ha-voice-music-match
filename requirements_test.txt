@@ -1,7 +1,5 @@
 pytest-homeassistant-custom-component==0.13.365
-# Requirements of HA components the tests touch (HA 2026.9.2 manifests):
-# music_assistant (its test config entry is unloaded at teardown) and
-# conversation (imported by assist_satellite).
+# Needed by the music_assistant and conversation components the tests load.
 gazetteer-matcher==1.1.0
 hassil==3.12.0
 home-assistant-intents==2026.8.28

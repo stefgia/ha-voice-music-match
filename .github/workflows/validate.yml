@@ -17,8 +17,6 @@ jobs:
         uses: hacs/action@main
         with:
           category: integration
-          # The icon ships in custom_components/ha_voice_music_match/brand/, which the
-          # HACS brands check reads directly, so no ignore is needed here.
 
   hassfest:
     name: Hassfest

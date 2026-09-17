@@ -58,10 +58,7 @@ class MusicMatchConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class MusicMatchOptionsFlow(OptionsFlow):
-    """One form with every option, prefilled with the current values.
-
-    The handler reads the options on every request, so saving needs no reload.
-    """
+    """Every option on one form. Changes apply without a reload."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

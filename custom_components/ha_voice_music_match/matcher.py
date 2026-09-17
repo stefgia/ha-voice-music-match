@@ -1,20 +1,12 @@
-"""Match a misheard music request against the library.
+"""Match a misheard music request against the library, on spelling and sound.
 
-Pure Python with no Home Assistant imports, so it can be tested and tuned on
-its own. Names are compared two ways and the better score wins:
-
-- spelling: the normalised name with spaces removed, so "gangsta grass" and
-  "Gangstagrass" line up;
-- sound: a phonetic key that folds letters people and speech-to-text confuse
-  (c/k/q, s/z, ph/f, dropped vowels), so "Gaza Grass" still lands near it.
-
-The cleanup rules ("the", "some", "X by Y") and the sound key follow English.
+No Home Assistant imports. Filler words, "X by Y" and the sound key assume English.
 """
 
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from difflib import SequenceMatcher
 from enum import StrEnum
 import re
@@ -26,27 +18,16 @@ TRACK = "track"
 PLAYLIST = "playlist"
 MEDIA_TYPES = (ARTIST, ALBUM, TRACK, PLAYLIST)
 
-# A track this close to the best artist/album score loses the tie to it
-# (user decision: artists and albums win ties against songs).
+# An artist or album within this margin of the best track wins.
 TIE_MARGIN = 0.03
 
-# Default thresholds; users can change both in the integration's options.
-# Scores at or above ACT play straight away. Between ASK and ACT is the "very
-# low confidence" band that asks "did you mean". Below ASK the request is
-# handed to Music Assistant's own search unchanged.
-#
-# Calibrated on a 2,333-item library: Piper said "Play <name>" for every
-# artist and album plus 120 songs, and Whisper (faster-whisper small-int8)
-# transcribed it. 71% of requests played the right item, 1% the wrong one,
-# 13% asked, 15% fell through. For 31 names not in the library (62
-# transcripts), 12 would play something else (the reply names it), 28 ask,
-# 22 fall through.
+# Default thresholds: play at ACT, ask "did you mean" at ASK. Tuned on Piper
+# speech transcribed by faster-whisper against a 2,333-item library.
 ACT = 0.70
 ASK = 0.62
 
-# Scoring every item takes about 25 microseconds, so 100,000 items take over
-# two seconds. Above PREFILTER_MIN_ITEMS, only the PREFILTER_KEEP items that
-# share the most three-letter chunks with the request are scored.
+# Above PREFILTER_MIN_ITEMS, only the PREFILTER_KEEP items sharing the most
+# three-letter chunks with the request are scored.
 PREFILTER_MIN_ITEMS = 5_000
 PREFILTER_KEEP = 1_000
 
@@ -150,9 +131,7 @@ def similarity(heard: _Keys, name: _Keys) -> float:
         return 1.0
     spelling = _ratio(heard.compact, name.compact)
     sound = _ratio(heard.sound, name.sound)
-    # Sound can only lift a score, never lower it. A short key ("kr" for both
-    # "the car" and "Cure") matches almost anything, so its weight shrinks
-    # below SOUND_FULL_WEIGHT_LEN characters.
+    # Sound only lifts a score. Short keys match almost anything, so they count for less.
     weight = SOUND_WEIGHT * min(1.0, min(len(heard.sound), len(name.sound)) / SOUND_FULL_WEIGHT_LEN)
     return max(spelling, (1 - weight) * spelling + weight * sound)
 
@@ -182,7 +161,7 @@ class Match:
 class _Entry:
     item: LibraryItem
     keys: _Keys
-    artist_keys: tuple[_Keys, ...] = field(default_factory=tuple)
+    artist_keys: tuple[_Keys, ...] = ()
 
 
 def band_for(score: float, act: float = ACT, ask: float = ASK) -> Band:
@@ -262,12 +241,9 @@ class Matcher:
         act: float = ACT,
         ask: float = ASK,
     ) -> Match | None:
-        """Return the best library item for what was heard.
+        """Return the best library item for what was heard, or None if there are no candidates.
 
-        None when the library is empty, or when it is big enough to pre-filter
-        and no name shares a three-letter chunk with the request.
-
-        Slow on big libraries: call it from a worker thread, not the event loop.
+        Blocking: call it from an executor.
         """
         query = strip_filler(normalise(heard))
         if not query:
