@@ -1,0 +1,15 @@
+{
+  "domain": "ha_voice_music_match",
+  "name": "Music Match",
+  "after_dependencies": ["music_assistant", "assist_satellite"],
+  "codeowners": ["@stefgia"],
+  "config_flow": true,
+  "dependencies": ["intent", "media_player"],
+  "documentation": "https://github.com/stefgia/ha-voice-music-match",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/stefgia/ha-voice-music-match/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.1.0"
+}

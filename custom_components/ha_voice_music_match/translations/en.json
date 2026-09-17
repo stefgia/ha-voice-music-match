@@ -1,0 +1,42 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "Corrects misheard artist, album, song and playlist names in \"play ...\" voice commands by matching them against your Music Assistant library. Change the language, thresholds and replies afterwards under Configure."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Music Match is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "description": "Replies are Home Assistant templates. They can use these variables: heard (the name as the voice assistant heard it), name, artist (songs and albums only), media_type and area.",
+        "data": {
+          "language": "Language",
+          "act_threshold": "Play threshold",
+          "ask_threshold": "Ask threshold",
+          "reply_playing": "Reply when playing",
+          "reply_not_found": "Reply when unsure",
+          "reply_did_you_mean": "Did-you-mean question",
+          "answers_yes": "Yes answers",
+          "answers_no": "No answers"
+        },
+        "data_description": {
+          "language": "Requests in this language are matched. Music Match passes requests in other languages to Home Assistant's own handler.",
+          "act_threshold": "A match scoring at least this much plays straight away. Scores run from 0 to 1.",
+          "ask_threshold": "A match between this and the play threshold asks the did-you-mean question first. Lower scores go to Music Assistant's search unchanged.",
+          "reply_playing": "Spoken after the matched item starts playing.",
+          "reply_not_found": "Spoken first when Music Match is unsure. The question follows once the voice assistant has finished speaking.",
+          "reply_did_you_mean": "Asked when Music Match is unsure. On a voice assistant, a yes answer plays the item.",
+          "answers_yes": "Phrases that count as yes to the question.",
+          "answers_no": "Phrases that count as no to the question."
+        }
+      }
+    },
+    "error": {
+      "ask_above_act": "The ask threshold must not be higher than the play threshold."
+    }
+  }
+}
