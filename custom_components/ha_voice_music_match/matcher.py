@@ -157,9 +157,10 @@ class LibraryItem:
 class Match:
     """The chosen item, how sure the match is, and what came second.
 
-    The runner-up is the closest item under a different name. A library holds
-    the same name many times over (a track on three albums, an artist and their
-    self-titled album), and those are the same answer, not a rival one.
+    The runner-up is the closest item under a different name, spacing aside. A
+    library holds the same name many times over (a track on three albums, an
+    artist and their self-titled album, "Gangstagrass" and "Gangsta Grass"), and
+    those are the same answer, not a rival one.
     """
 
     item: LibraryItem
@@ -291,13 +292,24 @@ class Matcher:
             for score, entry in scored[1:]:
                 if best_score - score > TIE_MARGIN:
                     break
+                if best_score == 1.0 and score < 1.0:
+                    # A name heard exactly keeps its place against a near one.
+                    break
                 if entry.item.media_type in (ARTIST, ALBUM):
                     best_score, best = score, entry
                     break
 
-        runner = next(((s, e) for s, e in scored if e.keys.norm != best.keys.norm), None)
+        # Same name as the winner, spacing aside (the scores ignore it too), is
+        # the same answer rather than a rival.
+        runner = next(((s, e) for s, e in scored if e.keys.compact != best.keys.compact), None)
         band = band_for(best_score, act, ask)
-        if band is Band.ACT and runner and best_score < 1.0 and best_score - runner[0] < margin:
+        if (
+            band is Band.ACT
+            and margin > 0
+            and runner
+            and best_score < 1.0
+            and best_score - runner[0] < margin
+        ):
             # Two names this close is a coin toss. Ask rather than guess.
             band = Band.ASK
         return Match(

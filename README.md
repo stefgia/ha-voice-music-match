@@ -78,19 +78,19 @@ What the margin is worth, measured on that corpus. "Wrong" counts the plays that
 
 | Library | Margin | Plays right | Wrong when it plays | Plays something for 80 requests it doesn't have |
 | --- | --- | --- | --- | --- |
-| 2,400 | 0 | 59% | 5% | 24 |
+| 2,400 | 0 | 60% | 5% | 24 |
 | 2,400 | 0.04 | 59% | 3% | 21 |
 | 2,400 | 0.08 | 56% | 2% | 16 |
 | 10,000 | 0 | 59% | 16% | 37 |
 | 10,000 | 0.04 | 56% | 10% | 31 |
 | 10,000 | 0.08 | 52% | 6% | 16 |
-| 100,000 | 0 | 56% | 26% | 56 |
+| 100,000 | 0 | 57% | 26% | 56 |
 | 100,000 | 0.04 | 51% | 12% | 28 |
 | 100,000 | 0.08 | 45% | 5% | 17 |
 
-So 0.04 is the default because a few-thousand-item library gets it for nothing: the same right plays as no margin at all, with fewer wrong ones. Past about ten thousand items, 0.08 is the better setting, and at a hundred thousand it is the difference between one play in twenty being wrong and one in four. It buys that by asking more often, which is the trade to make when the alternative is playing the wrong thing.
+So 0.04 is the default because it is close to free on a few-thousand-item library. Of 836 requests, it played 8 fewer right answers than no margin and 11 fewer wrong ones, and all 19 asked instead. Past about ten thousand items, 0.08 is the better setting, and at a hundred thousand it is the difference between one play in twenty being wrong and one in four. It buys that by asking more often, which is the trade to make when the alternative is playing the wrong thing.
 
-Setting it to 0 turns the margin off. That is not the same as 0.04 even on a small library: it plays no more right answers, just more wrong ones. Turn it off only if you would rather have the wrong item than a question. The margin costs no extra work either way, since the runner-up is already scored on the same pass.
+Setting it to 0 turns the margin off. Even on a small library that trades a question for a guess: in the numbers above, it played 8 more right answers and 11 more wrong ones. Turn it off only if you would rather risk the wrong item than answer a question. The margin costs no extra work either way, since the runner-up is already scored on the same pass.
 
 If Music Match plays the wrong thing, raise the margin before the play threshold. The margin only costs you the requests that had a real rival, where the threshold costs you every uncertain request. To see the scores your own requests get, listen for the `ha_voice_music_match_decision` event under **Developer tools > Events**. Music Match fires it for every request it scores, with the heard name, the chosen item, its score and the runner-up.
 
