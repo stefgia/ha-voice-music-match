@@ -69,7 +69,7 @@ async def test_options_flow_saves(hass: HomeAssistant) -> None:
     defaults = {str(key): key.default() for key in result["data_schema"].schema}
     assert defaults[CONF_ACT_THRESHOLD] == 0.70
     assert defaults[CONF_ASK_THRESHOLD] == 0.62
-    assert defaults[CONF_MARGIN] == 0.08
+    assert defaults[CONF_MARGIN] == 0.04
     assert defaults[CONF_LANGUAGE] == hass.config.language
 
     result = await hass.config_entries.options.async_configure(result["flow_id"], _options())

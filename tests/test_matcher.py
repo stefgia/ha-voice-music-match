@@ -138,10 +138,10 @@ def test_no_margin_plays_the_best_score() -> None:
 
 def test_an_exact_name_plays_past_a_close_rival() -> None:
     items = [*ITEMS, LibraryItem(ARTIST, "Mozzart", "a:9")]
-    match = Matcher(items).match("Mozart")
+    match = Matcher(items).match("Mozart", margin=0.2)
     assert match is not None
     assert match.score == 1.0
-    assert match.score - match.runner_up_score < MARGIN
+    assert match.score - match.runner_up_score < 0.2
     assert match.band is Band.ACT
 
 

@@ -28,8 +28,10 @@ ASK = 0.62
 
 # A winner this far ahead of the next differently-named item plays; a closer
 # one asks instead. The bigger the library, the more often two unrelated names
-# both score above ACT, so this does the work a fixed threshold cannot.
-MARGIN = 0.08
+# both score above ACT, so this does the work a fixed threshold cannot. On the
+# calibration corpus 0.04 cost no right plays at 2,400 items; a library in the
+# tens of thousands wants more, around 0.08.
+MARGIN = 0.04
 
 # Above PREFILTER_MIN_ITEMS, only the PREFILTER_KEEP items sharing the most
 # three-letter chunks with the request are scored.
