@@ -6,6 +6,7 @@ from custom_components.ha_voice_music_match import matcher as matcher_module
 from custom_components.ha_voice_music_match.matcher import (
     ACT,
     ALBUM,
+    MARGIN,
     ARTIST,
     PLAYLIST,
     TRACK,
@@ -107,6 +108,41 @@ def test_unrelated_request_is_not_acted_on() -> None:
     match = matcher().match("Taylor Swift")
     assert match is not None
     assert match.band is not Band.ACT
+
+
+def test_duplicate_names_are_not_a_rival() -> None:
+    """"Kansas" is in the library twice, as an artist and as a track: one answer."""
+    match = matcher().match("Kansus")
+    assert match is not None
+    assert match.item.name == "Kansas"
+    assert match.runner_up is not None
+    assert normalise(match.runner_up.name) != "kansas"
+    assert match.band is Band.ACT
+
+
+def test_a_close_rival_asks_instead_of_playing() -> None:
+    items = [*ITEMS, LibraryItem(ALBUM, "Morning Mixtape", "b:2", ("Someone",))]
+    match = Matcher(items).match("Mourning Mixed")
+    assert match is not None
+    assert match.score >= ACT
+    assert match.score - match.runner_up_score < MARGIN
+    assert match.band is Band.ASK
+
+
+def test_no_margin_plays_the_best_score() -> None:
+    items = [*ITEMS, LibraryItem(ALBUM, "Morning Mixtape", "b:2", ("Someone",))]
+    match = Matcher(items).match("Mourning Mixed", margin=0.0)
+    assert match is not None
+    assert match.band is Band.ACT
+
+
+def test_an_exact_name_plays_past_a_close_rival() -> None:
+    items = [*ITEMS, LibraryItem(ARTIST, "Mozzart", "a:9")]
+    match = Matcher(items).match("Mozart")
+    assert match is not None
+    assert match.score == 1.0
+    assert match.score - match.runner_up_score < MARGIN
+    assert match.band is Band.ACT
 
 
 def test_runner_up_is_reported() -> None:

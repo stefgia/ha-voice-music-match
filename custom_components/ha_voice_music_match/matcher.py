@@ -26,6 +26,11 @@ TIE_MARGIN = 0.03
 ACT = 0.70
 ASK = 0.62
 
+# A winner this far ahead of the next differently-named item plays; a closer
+# one asks instead. The bigger the library, the more often two unrelated names
+# both score above ACT, so this does the work a fixed threshold cannot.
+MARGIN = 0.08
+
 # Above PREFILTER_MIN_ITEMS, only the PREFILTER_KEEP items sharing the most
 # three-letter chunks with the request are scored.
 PREFILTER_MIN_ITEMS = 5_000
@@ -148,7 +153,12 @@ class LibraryItem:
 
 @dataclass(frozen=True)
 class Match:
-    """The chosen item, how sure the match is, and what came second."""
+    """The chosen item, how sure the match is, and what came second.
+
+    The runner-up is the closest item under a different name. A library holds
+    the same name many times over (a track on three albums, an artist and their
+    self-titled album), and those are the same answer, not a rival one.
+    """
 
     item: LibraryItem
     score: float
@@ -240,6 +250,7 @@ class Matcher:
         media_type: str | None = None,
         act: float = ACT,
         ask: float = ASK,
+        margin: float = MARGIN,
     ) -> Match | None:
         """Return the best library item for what was heard, or None if there are no candidates.
 
@@ -282,11 +293,15 @@ class Matcher:
                     best_score, best = score, entry
                     break
 
-        runner = next(((s, e) for s, e in scored if e is not best), None)
+        runner = next(((s, e) for s, e in scored if e.keys.norm != best.keys.norm), None)
+        band = band_for(best_score, act, ask)
+        if band is Band.ACT and runner and best_score < 1.0 and best_score - runner[0] < margin:
+            # Two names this close is a coin toss. Ask rather than guess.
+            band = Band.ASK
         return Match(
             item=best.item,
             score=round(best_score, 3),
-            band=band_for(best_score, act, ask),
+            band=band,
             runner_up=runner[1].item if runner else None,
             runner_up_score=round(runner[0], 3) if runner else 0.0,
         )

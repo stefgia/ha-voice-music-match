@@ -17,6 +17,7 @@ from .const import (
     CONF_ANSWERS_YES,
     CONF_ASK_THRESHOLD,
     CONF_LANGUAGE,
+    CONF_MARGIN,
     CONF_REPLY_DID_YOU_MEAN,
     CONF_REPLY_NOT_FOUND,
     CONF_REPLY_PLAYING,
@@ -26,7 +27,7 @@ from .const import (
     DEFAULT_REPLY_NOT_FOUND,
     DEFAULT_REPLY_PLAYING,
 )
-from .matcher import ACT, ALBUM, ASK, TRACK, LibraryItem
+from .matcher import ACT, ALBUM, ASK, MARGIN, TRACK, LibraryItem
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ class Settings:
     language: str
     act: float
     ask: float
+    margin: float
     replies: Mapping[str, str]
     answers_yes: list[str]
     answers_no: list[str]
@@ -62,6 +64,7 @@ class Settings:
             language=options.get(CONF_LANGUAGE) or hass.config.language,
             act=options.get(CONF_ACT_THRESHOLD, ACT),
             ask=options.get(CONF_ASK_THRESHOLD, ASK),
+            margin=options.get(CONF_MARGIN, MARGIN),
             replies={key: options.get(key) or default for key, default in _DEFAULT_REPLIES.items()},
             answers_yes=options.get(CONF_ANSWERS_YES) or DEFAULT_ANSWERS_YES,
             answers_no=options.get(CONF_ANSWERS_NO) or DEFAULT_ANSWERS_NO,

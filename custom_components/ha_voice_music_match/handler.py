@@ -65,7 +65,7 @@ class MusicMatchSearchAndPlayHandler(MediaSearchAndPlayHandler):
 
         heard: str = slots["search_query"]["value"]
         match = await hass.async_add_executor_job(
-            matcher.match, heard, media_class, settings.act, settings.ask
+            matcher.match, heard, media_class, settings.act, settings.ask, settings.margin
         )
         _fire_decision(hass, intent_obj.context, heard, media_class, match)
 

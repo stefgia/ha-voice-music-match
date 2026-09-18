@@ -21,6 +21,7 @@ SATELLITE_IDLE_SETTLE = 0.7
 CONF_LANGUAGE = "language"
 CONF_ACT_THRESHOLD = "act_threshold"
 CONF_ASK_THRESHOLD = "ask_threshold"
+CONF_MARGIN = "margin"
 CONF_REPLY_PLAYING = "reply_playing"
 CONF_REPLY_NOT_FOUND = "reply_not_found"
 CONF_REPLY_DID_YOU_MEAN = "reply_did_you_mean"

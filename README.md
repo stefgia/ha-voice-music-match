@@ -34,6 +34,7 @@ Home Assistant's own handler takes every other request, unchanged.
 Music Match scores each name in the library from 0 to 1. It compares both spelling (ignoring spaces, so "gangsta grass" matches "Gangstagrass") and a rough sound key (so "Gaza Grass" is close to "Gangstagrass"). "Song by artist" requests use both parts. If a song scores almost the same as an artist or album, the artist or album wins. Then:
 
 - A score at or above the play threshold (default 0.70) plays the item. Music Match passes the matched name and its type (artist, album, song or playlist) to Home Assistant's handler in place of what was heard.
+- A winner that beats the closest item under a different name by less than the margin (default 0.08) asks instead of playing. A name the library holds several times over, such as a song on three albums, counts once, and a name heard exactly always plays.
 - A score between the ask threshold (default 0.62) and the play threshold asks first. On a voice assistant, Music Match says "I couldn't find Gasket Grass.", then asks "Did you mean Gangstagrass?" and plays it if you say yes. A typed request gets both sentences in one reply and nothing is played.
 - A lower score goes to Music Assistant's search with the name as it was heard, as if Music Match were not installed.
 
@@ -48,6 +49,7 @@ Open **Settings > Devices & services > Music Match > Configure**. Changes apply 
 | Language | Home Assistant's language | Requests in this language are matched. Others go to Home Assistant's handler. |
 | Play threshold | 0.70 | Lowest score that plays straight away. |
 | Ask threshold | 0.62 | Lowest score that asks "did you mean". Must not be above the play threshold. |
+| Margin over the runner-up | 0.08 | How far ahead of the closest differently-named item the winner must be to play without asking. 0 turns it off. |
 | Reply when playing | `Playing {{ name }}{% if artist %} by {{ artist }}{% endif %}{% if area %} in the {{ area \| lower }}{% endif %}` | Spoken once the item starts. |
 | Reply when unsure | `I couldn't find {{ heard }}.` | Spoken before the question. |
 | Did-you-mean question | `Did you mean {{ name }}{% if artist %} by {{ artist }}{% endif %}?` | The question itself. |
@@ -65,6 +67,14 @@ Replies are [Home Assistant templates](https://www.home-assistant.io/docs/config
 A broken template falls back to the default reply and logs a warning.
 
 If you raise the thresholds, Music Match plays wrong items less often and asks or falls back to Music Assistant's search more often. Lowering them does the opposite. To see the scores your requests get, listen for the `ha_voice_music_match_decision` event under **Developer tools > Events**. Music Match fires it for every request it scores, with the heard name, the chosen item, its score and the runner-up.
+
+### Tuning for your library
+
+The defaults come from 916 recorded requests against a 2,400-item library, transcribed locally by faster-whisper. They hold up across speech-to-text quality: the same 0.70 was the right cut-off for both a `tiny` and a `small` model, and a weaker model mainly played fewer right answers rather than more wrong ones.
+
+Library size matters more. The bigger the library, the more often two unrelated names both clear the play threshold, so on the same corpus grown to 100,000 items, a quarter of the plays were wrong at the default 0.70 with no margin, against a twentieth at 2,400 items. The margin is what holds that in check: at 100,000 items it brought wrong plays back under a twentieth, at the cost of asking more often.
+
+If Music Match plays the wrong thing on a large library, raise the margin before the play threshold. The margin only costs you the requests that had a real rival, where the threshold costs you every uncertain request. To see the scores your own requests get, listen for the `ha_voice_music_match_decision` event under **Developer tools > Events**. Music Match fires it for every request it scores, with the heard name, the chosen item, its score and the runner-up.
 
 ## Other languages
 
