@@ -13,6 +13,7 @@ from custom_components.ha_voice_music_match.const import (
     CONF_ANSWERS_YES,
     CONF_ASK_THRESHOLD,
     CONF_LANGUAGE,
+    CONF_MARGIN,
     CONF_REPLY_DID_YOU_MEAN,
     CONF_REPLY_NOT_FOUND,
     CONF_REPLY_PLAYING,
@@ -50,6 +51,7 @@ def _options(**changes: object) -> dict[str, object]:
         CONF_LANGUAGE: "en",
         CONF_ACT_THRESHOLD: 0.8,
         CONF_ASK_THRESHOLD: 0.6,
+        CONF_MARGIN: 0.05,
         CONF_REPLY_PLAYING: "Now playing {{ name }}",
         CONF_REPLY_NOT_FOUND: DEFAULT_REPLY_NOT_FOUND,
         CONF_REPLY_DID_YOU_MEAN: DEFAULT_REPLY_DID_YOU_MEAN,
@@ -67,6 +69,7 @@ async def test_options_flow_saves(hass: HomeAssistant) -> None:
     defaults = {str(key): key.default() for key in result["data_schema"].schema}
     assert defaults[CONF_ACT_THRESHOLD] == 0.70
     assert defaults[CONF_ASK_THRESHOLD] == 0.62
+    assert defaults[CONF_MARGIN] == 0.04
     assert defaults[CONF_LANGUAGE] == hass.config.language
 
     result = await hass.config_entries.options.async_configure(result["flow_id"], _options())

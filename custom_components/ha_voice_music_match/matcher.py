@@ -26,6 +26,13 @@ TIE_MARGIN = 0.03
 ACT = 0.70
 ASK = 0.62
 
+# A winner this far ahead of the next differently-named item plays; a closer
+# one asks instead. The bigger the library, the more often two unrelated names
+# both score above ACT, so this does the work a fixed threshold cannot. On the
+# calibration corpus 0.04 cost no right plays at 2,400 items; a library in the
+# tens of thousands wants more, around 0.08.
+MARGIN = 0.04
+
 # Above PREFILTER_MIN_ITEMS, only the PREFILTER_KEEP items sharing the most
 # three-letter chunks with the request are scored.
 PREFILTER_MIN_ITEMS = 5_000
@@ -148,7 +155,13 @@ class LibraryItem:
 
 @dataclass(frozen=True)
 class Match:
-    """The chosen item, how sure the match is, and what came second."""
+    """The chosen item, how sure the match is, and what came second.
+
+    The runner-up is the closest item under a different name, spacing aside. A
+    library holds the same name many times over (a track on three albums, an
+    artist and their self-titled album, "Gangstagrass" and "Gangsta Grass"), and
+    those are the same answer, not a rival one.
+    """
 
     item: LibraryItem
     score: float
@@ -240,6 +253,7 @@ class Matcher:
         media_type: str | None = None,
         act: float = ACT,
         ask: float = ASK,
+        margin: float = MARGIN,
     ) -> Match | None:
         """Return the best library item for what was heard, or None if there are no candidates.
 
@@ -278,15 +292,30 @@ class Matcher:
             for score, entry in scored[1:]:
                 if best_score - score > TIE_MARGIN:
                     break
+                if best_score == 1.0 and score < 1.0:
+                    # A name heard exactly keeps its place against a near one.
+                    break
                 if entry.item.media_type in (ARTIST, ALBUM):
                     best_score, best = score, entry
                     break
 
-        runner = next(((s, e) for s, e in scored if e is not best), None)
+        # Same name as the winner, spacing aside (the scores ignore it too), is
+        # the same answer rather than a rival.
+        runner = next(((s, e) for s, e in scored if e.keys.compact != best.keys.compact), None)
+        band = band_for(best_score, act, ask)
+        if (
+            band is Band.ACT
+            and margin > 0
+            and runner
+            and best_score < 1.0
+            and best_score - runner[0] < margin
+        ):
+            # Two names this close is a coin toss. Ask rather than guess.
+            band = Band.ASK
         return Match(
             item=best.item,
             score=round(best_score, 3),
-            band=band_for(best_score, act, ask),
+            band=band,
             runner_up=runner[1].item if runner else None,
             runner_up_score=round(runner[0], 3) if runner else 0.0,
         )

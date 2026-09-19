@@ -6,6 +6,7 @@ from custom_components.ha_voice_music_match import matcher as matcher_module
 from custom_components.ha_voice_music_match.matcher import (
     ACT,
     ALBUM,
+    MARGIN,
     ARTIST,
     PLAYLIST,
     TRACK,
@@ -107,6 +108,79 @@ def test_unrelated_request_is_not_acted_on() -> None:
     match = matcher().match("Taylor Swift")
     assert match is not None
     assert match.band is not Band.ACT
+
+
+def test_duplicate_names_are_not_a_rival() -> None:
+    """"Kansas" is in the library twice, as an artist and as a track: one answer."""
+    match = matcher().match("Kansus")
+    assert match is not None
+    assert match.item.name == "Kansas"
+    assert match.runner_up is not None
+    assert normalise(match.runner_up.name) != "kansas"
+    assert match.band is Band.ACT
+
+
+def test_a_close_rival_asks_instead_of_playing() -> None:
+    items = [*ITEMS, LibraryItem(ALBUM, "Morning Mixtape", "b:2", ("Someone",))]
+    match = Matcher(items).match("Mourning Mixed")
+    assert match is not None
+    assert match.score >= ACT
+    assert match.score - match.runner_up_score < MARGIN
+    assert match.band is Band.ASK
+
+
+def test_no_margin_plays_the_best_score() -> None:
+    items = [*ITEMS, LibraryItem(ALBUM, "Morning Mixtape", "b:2", ("Someone",))]
+    match = Matcher(items).match("Mourning Mixed", margin=0.0)
+    assert match is not None
+    assert match.band is Band.ACT
+
+
+def test_an_exact_name_plays_past_a_close_rival() -> None:
+    items = [*ITEMS, LibraryItem(ARTIST, "Mozzart", "a:9")]
+    match = Matcher(items).match("Mozart", margin=0.2)
+    assert match is not None
+    assert match.score == 1.0
+    assert match.score - match.runner_up_score < 0.2
+    assert match.band is Band.ACT
+
+
+def test_spacing_variants_are_not_a_rival() -> None:
+    """The scores ignore spaces, so the rival check has to as well."""
+    items = [*ITEMS, LibraryItem(ALBUM, "Gangsta Grass", "b:2", ("Someone",))]
+    match = Matcher(items).match("Gaza Grass")
+    assert match is not None
+    assert match.runner_up is not None
+    assert normalise(match.runner_up.name).replace(" ", "") != "gangstagrass"
+    assert match.band is Band.ACT
+
+
+def test_no_margin_plays_after_the_artist_tie_break() -> None:
+    """An artist promoted over a slightly higher track still plays with the margin off."""
+    items = [
+        LibraryItem(TRACK, "Allegro Moderato Cantabile", "t:9", ("Someone",)),
+        LibraryItem(ARTIST, "Allegro Moderato Cantabila", "a:9"),
+    ]
+    matcher_ = Matcher(items)
+    off = matcher_.match("Alegro Moderato Cantabile", margin=0.0)
+    assert off is not None
+    assert off.item.media_type == ARTIST
+    assert off.runner_up_score > off.score
+    assert off.band is Band.ACT
+    # With the margin on, a differently-named track scoring higher is a real rival.
+    on = matcher_.match("Alegro Moderato Cantabile")
+    assert on is not None
+    assert on.band is Band.ASK
+
+
+def test_an_exact_track_is_not_displaced_by_a_near_artist() -> None:
+    name = "Symphony No 9 in D Minor Choral Finale Allegro"
+    items = [LibraryItem(TRACK, name, "t:9", ("Someone",)), LibraryItem(ARTIST, name[:-1] + "a", "a:9")]
+    match = Matcher(items).match(name)
+    assert match is not None
+    assert match.item.uri == "t:9"
+    assert match.score == 1.0
+    assert match.band is Band.ACT
 
 
 def test_runner_up_is_reported() -> None:

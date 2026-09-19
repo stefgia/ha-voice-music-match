@@ -24,6 +24,7 @@ from .const import (
     CONF_ANSWERS_YES,
     CONF_ASK_THRESHOLD,
     CONF_LANGUAGE,
+    CONF_MARGIN,
     CONF_REPLY_DID_YOU_MEAN,
     CONF_REPLY_NOT_FOUND,
     CONF_REPLY_PLAYING,
@@ -77,6 +78,7 @@ class MusicMatchOptionsFlow(OptionsFlow):
                 vol.Required(CONF_LANGUAGE, default=current.language): LanguageSelector(),
                 vol.Required(CONF_ACT_THRESHOLD, default=current.act): _THRESHOLD,
                 vol.Required(CONF_ASK_THRESHOLD, default=current.ask): _THRESHOLD,
+                vol.Required(CONF_MARGIN, default=current.margin): _THRESHOLD,
                 vol.Required(
                     CONF_REPLY_PLAYING, default=current.replies[CONF_REPLY_PLAYING]
                 ): TemplateSelector(),
